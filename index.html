@@ -7,6 +7,7 @@
 <style>
   :root {
     --bg: #0a0e14;
+    --accent: #f0a830;
     --mono: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
   }
   * { box-sizing: border-box; }
@@ -71,40 +72,60 @@
   }
   .tagline em { color: #c3cad6; font-style: italic; }
 
-  /* milky way button */
-  .galaxy-btn {
+  .ask { position: relative; z-index: 1; text-align: center; }
+  .q {
+    margin: 40px 0 0;
+    font-size: 17px;
+    letter-spacing: 0.04em;
+    color: #c3cad6;
+  }
+
+  .choices {
     position: relative;
-    z-index: 1;
-    margin-top: 36px;
-    width: 72px;
-    height: 72px;
-    border-radius: 50%;
-    cursor: pointer;
+    margin-top: 22px;
+    min-height: 60px;
     display: flex;
+    gap: 18px;
     align-items: center;
     justify-content: center;
-    transition: transform 0.3s ease;
   }
-  .galaxy-btn:hover {
-    transform: scale(1.06);
-  }
-  .galaxy-btn canvas { border-radius: 50%; display: block; }
 
-  .btn-label {
+  .choice {
+    position: relative;
+    z-index: 2;
+    font-family: var(--mono);
+    font-size: 16px;
+    letter-spacing: 0.06em;
+    padding: 13px 36px;
+    border-radius: 999px;
+    border: 1px solid var(--accent);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  }
+  .choice.yes { background: var(--accent); color: #0a0e14; }
+  .choice.yes:hover { transform: scale(1.06); }
+
+  .choice.no {
+    background: none;
+    color: var(--accent);
+    transition: left 0.28s cubic-bezier(.2,.8,.3,1), top 0.28s cubic-bezier(.2,.8,.3,1),
+                background 0.2s ease, color 0.2s ease;
+  }
+
+  .hint {
     position: relative;
     z-index: 1;
-    margin-top: 22px;
-    font-size: 13px;
-    letter-spacing: 0.2em;
+    margin-top: 26px;
+    font-size: 12px;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: #9aa3b2;
-    animation: pulse 2.6s ease-in-out infinite;
+    color: #565d6a;
+    min-height: 16px;
+    transition: opacity 0.3s ease;
   }
-  @keyframes pulse { 0%,100% { opacity: 0.45; } 50% { opacity: 1; } }
 
   @media (max-width: 720px) {
     h1 { font-size: 34px; }
-    .galaxy-btn { width: 64px; height: 64px; }
   }
 </style>
 </head>
@@ -114,72 +135,56 @@
   <h1>PLAN A DAY WITH KANISH</h1>
   <p class="tagline">One (1) whole day, pre-planned. No "idk, what do <em>you</em> wanna do?" loops allowed.</p>
 
-  <div class="galaxy-btn" id="galaxyBtn" title="Enter">
-    <canvas id="galaxy" width="72" height="72"></canvas>
+  <div class="ask">
+    <p class="q">So… are we doing this?</p>
+    <div class="choices" id="choices">
+      <button class="choice yes" id="yesBtn" type="button">Yes</button>
+      <button class="choice no" id="noBtn" type="button">No</button>
+    </div>
   </div>
 
-  <script type="importmap">
-  { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
-  </script>
+  <p class="hint" id="hint"></p>
 
-  <script type="module">
-    import * as THREE from 'three';
+  <script>
+    const yesBtn = document.getElementById('yesBtn');
+    const noBtn  = document.getElementById('noBtn');
+    const hint   = document.getElementById('hint');
 
-    const canvas = document.getElementById('galaxy');
-    const SIZE = 72;
+    const QUIPS = [
+      'nice try',
+      'too slow',
+      'not an option ;)',
+      'the button said no',
+      'catch me if you can',
+      'wrong one'
+    ];
+    let dodges = 0;
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    renderer.setSize(SIZE, SIZE, false);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
+    function flee(e) {
+      if (e) e.preventDefault();
+      const bw = noBtn.offsetWidth, bh = noBtn.offsetHeight;
+      const m = 14;
+      const maxX = Math.max(m, window.innerWidth  - bw - m);
+      const maxY = Math.max(m, window.innerHeight - bh - m);
+      const x = Math.floor(m + Math.random() * (maxX - m));
+      const y = Math.floor(m + Math.random() * (maxY - m));
+      noBtn.style.position = 'fixed';
+      noBtn.style.margin = '0';
+      noBtn.style.left = x + 'px';
+      noBtn.style.top  = y + 'px';
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 100);
-    camera.position.set(0, 2.6, 4.4);
-    camera.lookAt(0, 0, 0);
-
-    // galaxy particles
-    const COUNT = 4500, RADIUS = 5, BRANCHES = 5, SPIN = 1.1, RANDOMNESS = 0.32, POWER = 2.6;
-    const positions = new Float32Array(COUNT * 3);
-    const colors = new Float32Array(COUNT * 3);
-    const inside = new THREE.Color(0xffb066);
-    const outside = new THREE.Color(0x3a6bd6);
-
-    for (let i = 0; i < COUNT; i++) {
-      const i3 = i * 3;
-      const r = Math.pow(Math.random(), 1.5) * RADIUS;
-      const angle = ((i % BRANCHES) / BRANCHES) * Math.PI * 2;
-      const spin = r * SPIN;
-      const rnd = () => Math.pow(Math.random(), POWER) * (Math.random() < 0.5 ? 1 : -1) * RANDOMNESS * r;
-      positions[i3]     = Math.cos(angle + spin) * r + rnd();
-      positions[i3 + 1] = rnd() * 0.45;
-      positions[i3 + 2] = Math.sin(angle + spin) * r + rnd();
-      const c = inside.clone().lerp(outside, r / RADIUS);
-      colors[i3] = c.r; colors[i3 + 1] = c.g; colors[i3 + 2] = c.b;
+      hint.textContent = QUIPS[dodges % QUIPS.length];
+      dodges++;
+      // "Yes" gets a little more eager every time "No" runs off
+      yesBtn.style.transform = 'scale(' + Math.min(1 + dodges * 0.09, 1.85) + ')';
     }
 
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    const mat = new THREE.PointsMaterial({
-      size: 0.035, sizeAttenuation: true, depthWrite: true,
-      blending: THREE.NormalBlending, vertexColors: true, transparent: false
-    });
-    const galaxy = new THREE.Points(geo, mat);
-    galaxy.rotation.x = 0.4;
-    scene.add(galaxy);
+    // Hover (desktop) + the actual tap/press (mobile) both make it run away.
+    ['pointerenter', 'pointerdown', 'mousedown', 'touchstart', 'click', 'focus'].forEach(ev =>
+      noBtn.addEventListener(ev, flee, { passive: false })
+    );
 
-    const clock = new THREE.Clock();
-    (function loop() {
-      const t = clock.getElapsedTime();
-      galaxy.rotation.y = t * 0.08;            // slow rotation
-      renderer.render(scene, camera);
-      requestAnimationFrame(loop);
-    })();
-
-    document.getElementById('galaxyBtn').addEventListener('click', () => {
-      window.location.href = 'day.html';
-    });
+    yesBtn.addEventListener('click', () => { window.location.href = 'day.html'; });
   </script>
 </body>
 </html>

@@ -1,0 +1,6 @@
+# Netlify CLI / deploy artifacts
+.netlify/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db

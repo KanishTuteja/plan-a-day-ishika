@@ -149,6 +149,56 @@
   }
   .back:hover { color: var(--accent); }
 
+  /* search-your-own */
+  .ownpick { margin-top: 30px; }
+  .ownpick .divider {
+    display: flex; align-items: center; gap: 12px;
+    color: #565d6a; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .ownpick .divider::before, .ownpick .divider::after {
+    content: ""; flex: 1; height: 1px; background: var(--line);
+  }
+  .search-wrap { position: relative; max-width: 470px; margin: 0 auto; }
+  .search-input {
+    width: 100%; background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; color: #f3f4f6; font-family: var(--mono);
+    font-size: 14px; padding: 13px 16px 13px 44px; outline: none;
+    transition: border-color 0.18s ease;
+  }
+  .search-input::placeholder { color: #565d6a; }
+  .search-input:focus { border-color: var(--accent); }
+  .search-icon {
+    position: absolute; left: 16px; top: 14px;
+    width: 17px; height: 17px; fill: none; stroke: #6b7280;
+    stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+    pointer-events: none; transition: stroke 0.18s ease;
+  }
+  .search-input:focus ~ .search-icon { stroke: var(--accent); }
+
+  .results {
+    position: absolute; left: 0; right: 0; top: calc(100% + 8px);
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; overflow: hidden auto; max-height: 300px;
+    z-index: 5; display: none;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+  }
+  .results.show { display: block; }
+  .result-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 11px 15px; font-size: 13px; color: #d8dee9; cursor: pointer;
+    border-bottom: 1px solid #1c2530;
+  }
+  .result-item:last-child { border-bottom: none; }
+  .result-item:hover, .result-item.active { background: var(--card-hover); color: #fff; }
+  .result-item .dot { color: var(--accent); font-size: 11px; flex: 0 0 auto; }
+  .result-item .nm { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .result-item .cat {
+    flex: 0 0 auto; font-size: 10px; color: #6b7280;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .result-item.own { border-top: 1px solid var(--line); }
+
   @media (max-width: 560px) {
     .activity { flex-wrap: wrap; }
     .meta { text-align: left; width: 100%; }
@@ -236,6 +286,16 @@
 
     <p class="note">★ ratings are a recent snapshot — tap "View on Maps" for live ratings &amp; hours.</p>
 
+    <div class="ownpick">
+      <div class="divider">or pick your own</div>
+      <div class="search-wrap">
+        <input id="search" class="search-input" type="text" autocomplete="off" spellcheck="false"
+               placeholder="Search fun things to do in Toronto…" />
+        <svg class="search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <div class="results" id="results"></div>
+      </div>
+    </div>
+
     <button class="cta" id="confirm">Start here ▸</button>
     <a class="back" href="calendar.html">◂ change the day</a>
   </div>
@@ -243,21 +303,185 @@
   <script>
     const confirmEl = document.getElementById('confirm');
     const dateChip = document.getElementById('datechip');
+    const searchInput = document.getElementById('search');
+    const resultsEl = document.getElementById('results');
     let selected = null;
+    let activeIdx = -1;
 
     dateChip.textContent = sessionStorage.getItem('chosenDate') || 'Your day';
 
+    // A big grab-bag of fun things to do in Toronto she can search through.
+    const ACTIVITIES = [
+      { n: 'CN Tower EdgeWalk', c: 'Thrills' },
+      { n: 'CN Tower SkyPod', c: 'Heights' },
+      { n: 'Ripley’s Aquarium of Canada', c: 'Experience' },
+      { n: 'Ripley’s Believe It or Not', c: 'Experience' },
+      { n: 'Royal Ontario Museum (ROM)', c: 'Museum' },
+      { n: 'Art Gallery of Ontario (AGO)', c: 'Art' },
+      { n: 'Casa Loma', c: 'Landmark' },
+      { n: 'Casa Loma Escape Series', c: 'Escape Room' },
+      { n: 'Aga Khan Museum', c: 'Museum' },
+      { n: 'Gardiner Museum (clay class)', c: 'Workshop' },
+      { n: 'Bata Shoe Museum', c: 'Museum' },
+      { n: 'Hockey Hall of Fame', c: 'Museum' },
+      { n: 'Museum of Illusions', c: 'Experience' },
+      { n: 'Little Canada', c: 'Experience' },
+      { n: 'Immersive Van Gogh', c: 'Art' },
+      { n: 'TIFF Bell Lightbox', c: 'Film' },
+      { n: 'Toronto Islands ferry', c: 'Outdoors' },
+      { n: 'Centre Island bike rental', c: 'Active' },
+      { n: 'Kayaking the Toronto Islands', c: 'Water' },
+      { n: 'Paddleboarding at Harbourfront', c: 'Water' },
+      { n: 'High Park', c: 'Outdoors' },
+      { n: 'High Park cherry blossoms', c: 'Outdoors' },
+      { n: 'Scarborough Bluffs', c: 'Outdoors' },
+      { n: 'Cherry Beach', c: 'Outdoors' },
+      { n: 'Evergreen Brick Works', c: 'Outdoors' },
+      { n: 'Trinity Bellwoods Park', c: 'Outdoors' },
+      { n: 'Toronto Zoo', c: 'Animals' },
+      { n: 'Riverdale Farm', c: 'Animals' },
+      { n: 'Allan Gardens Conservatory', c: 'Outdoors' },
+      { n: 'Kensington Market stroll', c: 'Stroll' },
+      { n: 'St. Lawrence Market', c: 'Market' },
+      { n: 'Distillery District', c: 'Stroll' },
+      { n: 'Graffiti Alley', c: 'Stroll' },
+      { n: 'Snakes & Lattes board games', c: 'Games' },
+      { n: 'Activate interactive gaming', c: 'Games' },
+      { n: 'The Rec Room', c: 'Games' },
+      { n: 'Tilt Arcade', c: 'Arcade' },
+      { n: 'Axe throwing at BATL', c: 'Active' },
+      { n: 'Escape room', c: 'Escape Room' },
+      { n: 'VR at Ctrl V', c: 'Games' },
+      { n: 'Karaoke night', c: 'Nightlife' },
+      { n: 'Glow-in-the-dark mini golf', c: 'Games' },
+      { n: 'Bowling at The Ballroom', c: 'Active' },
+      { n: 'Rock climbing at Basecamp', c: 'Active' },
+      { n: 'Bouldering at Joe Rockhead’s', c: 'Active' },
+      { n: 'Trampoline park (Sky Zone)', c: 'Active' },
+      { n: 'Go-karting at K1 Speed', c: 'Active' },
+      { n: 'Ice skating at Nathan Phillips Square', c: 'Seasonal' },
+      { n: 'Indoor skydiving (iFLY)', c: 'Thrills' },
+      { n: 'Spin Pottery wheel class', c: 'Workshop' },
+      { n: 'Planet Splatter paint room', c: 'Experience' },
+      { n: 'Candle-making workshop', c: 'Workshop' },
+      { n: 'Mirvish musical', c: 'Show' },
+      { n: 'Second City comedy show', c: 'Comedy' },
+      { n: 'Comedy Bar', c: 'Comedy' },
+      { n: 'Candlelight Concerts', c: 'Music' },
+      { n: 'Toronto Symphony (TSO)', c: 'Music' },
+      { n: 'Raptors game', c: 'Sports' },
+      { n: 'Maple Leafs game', c: 'Sports' },
+      { n: 'Blue Jays game', c: 'Sports' },
+      { n: 'Toronto FC match', c: 'Sports' },
+      { n: 'Helicopter city tour', c: 'Thrills' },
+      { n: 'Hot air balloon ride', c: 'Thrills' },
+      { n: 'Canada’s Wonderland', c: 'Thrills' },
+      { n: 'Niagara Falls day trip', c: 'Day Trip' },
+      { n: 'Blue Mountain day trip', c: 'Day Trip' },
+      { n: 'Wine tasting in Niagara', c: 'Day Trip' },
+      { n: 'Treetop Trekking', c: 'Active' },
+      { n: 'Yorkville window shopping', c: 'Stroll' },
+      { n: 'Cantilevered patio at the AGO', c: 'Art' },
+      { n: 'Drag brunch show', c: 'Show' }
+    ];
+
+    function setSelected(label) {
+      selected = label;
+      confirmEl.classList.add('ready');
+      confirmEl.textContent = 'Start with ' + label + ' ▸';
+    }
+    function clearSelection() {
+      selected = null;
+      confirmEl.classList.remove('ready');
+      confirmEl.textContent = 'Start here ▸';
+    }
+    function clearCardSel() {
+      document.querySelectorAll('.activity.selected').forEach(c => c.classList.remove('selected'));
+    }
+
+    // ---- preset cards ----
     document.querySelectorAll('.activity').forEach(card => {
       card.addEventListener('click', (e) => {
         if (e.target.closest('.maps')) return;   // let the Maps link work
-        document.querySelectorAll('.activity.selected').forEach(c => c.classList.remove('selected'));
+        clearCardSel();
         card.classList.add('selected');
-        selected = card.dataset.title;
-        confirmEl.classList.add('ready');
-        confirmEl.textContent = 'Start with ' + selected + ' ▸';
+        searchInput.value = '';
+        hideResults();
+        setSelected(card.dataset.title);
       });
     });
 
+    // ---- search-your-own ----
+    function escapeHtml(s) {
+      return s.replace(/[&<>"]/g, ch => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[ch]));
+    }
+    function hideResults() { resultsEl.classList.remove('show'); activeIdx = -1; }
+
+    function renderResults() {
+      const q = searchInput.value.trim();
+      if (!q) { hideResults(); return; }
+      const ql = q.toLowerCase();
+      const matches = ACTIVITIES.filter(a => a.n.toLowerCase().includes(ql)).slice(0, 8);
+      let html = matches.map(a =>
+        '<div class="result-item" data-name="' + escapeHtml(a.n) + '">' +
+          '<span class="dot">◆</span>' +
+          '<span class="nm">' + escapeHtml(a.n) + '</span>' +
+          '<span class="cat">' + escapeHtml(a.c) + '</span>' +
+        '</div>'
+      ).join('');
+      html += '<div class="result-item own" data-own="1">' +
+                '<span class="dot">＋</span>' +
+                '<span class="nm">Use “' + escapeHtml(q) + '”</span>' +
+                '<span class="cat">her pick</span>' +
+              '</div>';
+      resultsEl.innerHTML = html;
+      resultsEl.classList.add('show');
+      activeIdx = -1;
+    }
+
+    function chooseItem(item) {
+      const name = item.dataset.own ? searchInput.value.trim() : item.dataset.name;
+      if (!name) return;
+      clearCardSel();
+      searchInput.value = name;
+      hideResults();
+      setSelected(name);
+    }
+
+    searchInput.addEventListener('input', () => {
+      clearCardSel();
+      const q = searchInput.value.trim();
+      if (!q) { clearSelection(); hideResults(); return; }
+      renderResults();
+    });
+
+    searchInput.addEventListener('focus', () => { if (searchInput.value.trim()) renderResults(); });
+
+    searchInput.addEventListener('keydown', (e) => {
+      const items = [...resultsEl.querySelectorAll('.result-item')];
+      if (e.key === 'ArrowDown' && items.length) {
+        e.preventDefault(); activeIdx = (activeIdx + 1) % items.length;
+      } else if (e.key === 'ArrowUp' && items.length) {
+        e.preventDefault(); activeIdx = (activeIdx - 1 + items.length) % items.length;
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (activeIdx >= 0 && items[activeIdx]) chooseItem(items[activeIdx]);
+        else if (items.length) chooseItem(items[items.length - 1]); // fall back to "Use ..."
+        return;
+      } else if (e.key === 'Escape') { hideResults(); return; } else { return; }
+      items.forEach((it, i) => it.classList.toggle('active', i === activeIdx));
+    });
+
+    resultsEl.addEventListener('click', (e) => {
+      const item = e.target.closest('.result-item');
+      if (item) chooseItem(item);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.search-wrap')) hideResults();
+    });
+
+    // ---- confirm ----
     confirmEl.addEventListener('click', () => {
       if (!selected) return;
       sessionStorage.setItem('chosenActivity', selected);

@@ -53,13 +53,22 @@
     text-align: left;
   }
   .row {
-    display: flex; gap: 14px; align-items: baseline;
-    padding: 15px 0;
+    display: flex; gap: 12px; align-items: center;
+    padding: 13px 0;
     border-bottom: 1px solid var(--line);
   }
   .row:last-child { border-bottom: none; }
-  .row .n { color: var(--accent); font-size: 11px; min-width: 70px; letter-spacing: 0.08em; }
-  .row .v { font-size: 15px; color: #e6e9ef; }
+  .row .meta-col { flex: 0 0 auto; min-width: 74px; }
+  .row .n { display: block; color: var(--accent); font-size: 11px; letter-spacing: 0.08em; }
+  .row .time { display: block; margin-top: 3px; color: #6b7280; font-size: 11px; }
+  .row .v { flex: 1 1 auto; min-width: 0; font-size: 15px; color: #e6e9ef;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row-add {
+    flex: 0 0 auto; font-size: 12px; color: var(--accent); text-decoration: none;
+    border: 1px solid var(--accent); border-radius: 999px; padding: 7px 13px;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .row-add:hover, .row-add:active { background: var(--accent); color: #0a0e14; }
 
   .actions { margin-top: 30px; display: flex; flex-direction: column; gap: 12px; }
   .btn {
@@ -79,7 +88,22 @@
   }
   .seen b { color: #9aa3b2; font-weight: 400; }
 
-  .cheers-line { margin-top: 30px; font-size: 16px; color: var(--accent); line-height: 1.6; }
+  .oath {
+    margin-top: 30px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px 22px;
+    background: #11151c;
+    text-align: center;
+  }
+  .oath-seal { font-size: 22px; letter-spacing: 0.3em; }
+  .oath-kicker {
+    margin: 8px 0 12px; font-size: 10px; letter-spacing: 0.34em;
+    text-transform: uppercase; color: #6b7280;
+  }
+  .oath-text { margin: 0; font-size: 15px; line-height: 1.75; color: #d8dee9; }
+  .oath-text b { color: var(--accent); font-weight: 400; }
+  .oath-text .small { display: block; margin-top: 12px; font-size: 12px; color: #7d8696; letter-spacing: 0.04em; }
 
   .back {
     display: block; margin-top: 28px; color: #7d8696; text-decoration: none;
@@ -97,26 +121,59 @@
     <p class="date" id="date">—</p>
 
     <div class="card">
-      <div class="row"><span class="n">01 · START</span><span class="v" id="activity">—</span></div>
-      <div class="row"><span class="n">02 · WALK</span><span class="v" id="walk">—</span></div>
-      <div class="row"><span class="n">03 · DINNER</span><span class="v" id="dinner">—</span></div>
-      <div class="row"><span class="n">04 · NIGHTCAP</span><span class="v" id="combo">—</span></div>
+      <div class="row">
+        <span class="meta-col"><span class="n">01 · START</span><span class="time" id="t-activity"></span></span>
+        <span class="v" id="activity">—</span>
+        <a class="row-add" id="add-activity" href="#" target="_blank" rel="noopener">Add ▸</a>
+      </div>
+      <div class="row">
+        <span class="meta-col"><span class="n">02 · WALK</span><span class="time" id="t-walk"></span></span>
+        <span class="v" id="walk">—</span>
+        <a class="row-add" id="add-walk" href="#" target="_blank" rel="noopener">Add ▸</a>
+      </div>
+      <div class="row">
+        <span class="meta-col"><span class="n">03 · DINNER</span><span class="time" id="t-dinner"></span></span>
+        <span class="v" id="dinner">—</span>
+        <a class="row-add" id="add-dinner" href="#" target="_blank" rel="noopener">Add ▸</a>
+      </div>
+      <div class="row">
+        <span class="meta-col"><span class="n">04 · NIGHTCAP</span><span class="time" id="t-combo"></span></span>
+        <span class="v" id="combo">—</span>
+        <a class="row-add" id="add-combo" href="#" target="_blank" rel="noopener">Add ▸</a>
+      </div>
     </div>
 
     <div class="actions">
-      <a class="btn primary" id="gcal" href="#" target="_blank" rel="noopener">📅 Add to Google Calendar</a>
+      <a class="btn primary" id="gcal" href="#" target="_blank" rel="noopener">📅 Add the whole day &amp; invite Kanish</a>
       <a class="btn ghost" id="mail" href="#">💌 Send my plan to Kanish</a>
+      <a class="btn ghost" id="mailMe" href="#">📧 Email a copy to myself</a>
     </div>
 
     <p class="seen">
-      Heads up, Fishika: adding this to your calendar invites <b>Kanish</b> as a guest —
-      so he'll see you picked everything. The "send" button emails him the plan too.
+      Tap <b>Add ▸</b> on any line to drop that part straight into your Google Calendar at its time.
+      <b>Add the whole day</b> makes one event and invites <b>Kanish</b> as a guest.
+      <b>Send to Kanish</b> emails him the plan, and <b>email a copy to myself</b> keeps one in your own inbox.
     </p>
 
-    <p class="cheers-line" id="cheers">—</p>
+    <div class="oath">
+      <div class="oath-seal">⚔</div>
+      <div class="oath-kicker">the oath is sworn</div>
+      <p class="oath-text" id="oath">—</p>
+    </div>
 
     <a class="back" href="index.html">◂ start over</a>
   </div>
+
+  <!-- Netlify Forms: detected at deploy, submitted silently from the script below -->
+  <form name="plan-complete" data-netlify="true" netlify-honeypot="bot-field" hidden>
+    <input type="hidden" name="form-name" value="plan-complete" />
+    <p hidden><label>Don't fill this out: <input name="bot-field" /></label></p>
+    <input type="text" name="date" />
+    <input type="text" name="activity" />
+    <input type="text" name="walk" />
+    <input type="text" name="dinner" />
+    <input type="text" name="nightcap" />
+  </form>
 
   <script>
     const KANISH_EMAIL = 'kanishtuteja@gmail.com';
@@ -133,8 +190,12 @@
     document.getElementById('walk').textContent = walk;
     document.getElementById('dinner').textContent = dinner;
     document.getElementById('combo').textContent = combo;
-    document.getElementById('cheers').textContent =
-      '🥂 To finally doing this together. See you on ' + dateStr.split(',')[0] + '.';
+    const oathDate = dateStr.includes(',') ? dateStr.split(',').slice(1).join(',').trim() : dateStr;
+    document.getElementById('oath').innerHTML =
+      'M\'lady <b>Fishika</b>, you are bound to this day — <b>' + oathDate + '</b> — ' +
+      'by ice and by fire, before the old gods and the new. What is pledged may not be unpledged. ' +
+      'Winter is coming… and so are we. 🐺❄️' +
+      '<span class="small">🥂 To finally doing this together. The realm awaits.</span>';
 
     // ---- Build the plan text ----
     const planText =
@@ -164,6 +225,56 @@
       '?subject=' + encodeURIComponent("Fishika's plan is locked in 🪐") +
       '&body=' + encodeURIComponent(planText);
     document.getElementById('mail').href = mailUrl;
+
+    // ---- Email a copy to herself (blank recipient — she fills her own address) ----
+    const mailMeUrl =
+      'mailto:' +
+      '?subject=' + encodeURIComponent('My day with Kanish 🪐 — ' + dateStr) +
+      '&body=' + encodeURIComponent(planText);
+    document.getElementById('mailMe').href = mailMeUrl;
+
+    // ---- Auto-notify Kanish when the plan is locked in (Netlify Forms) ----
+    (function notifyOnce() {
+      const complete = [activity, walk, dinner, combo].every(v => v && v !== 'TBD');
+      if (!complete) return;
+      const sig = [dateISO, activity, walk, dinner, combo].join('|');
+      if (sessionStorage.getItem('planNotified') === sig) return;   // send once per finished plan
+      const body = new URLSearchParams({
+        'form-name': 'plan-complete',
+        date: dateStr,
+        activity: activity,
+        walk: walk,
+        dinner: dinner,
+        nightcap: combo
+      }).toString();
+      fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body
+      }).then(() => sessionStorage.setItem('planNotified', sig)).catch(() => {});
+    })();
+
+    // ---- Per-slot Google Calendar links (tap = opens her calendar at that time) ----
+    // Calendar only offers July 2026 weekends, so times are local Toronto clock times.
+    const SCHED = {
+      activity: { n: '01 · Start',    v: activity, s: '140000', e: '160000', t: '2:00 PM' },
+      walk:     { n: '02 · Walk',     v: walk,     s: '161500', e: '173000', t: '4:15 PM' },
+      dinner:   { n: '03 · Dinner',   v: dinner,   s: '183000', e: '203000', t: '6:30 PM' },
+      combo:    { n: '04 · Nightcap', v: combo,    s: '204500', e: '220000', t: '8:45 PM' }
+    };
+    function slotGcal(seg, key) {
+      return 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+        '&text=' + encodeURIComponent(seg.n + ' — ' + seg.v) +
+        '&dates=' + dateISO + 'T' + seg.s + '/' + dateISO + 'T' + seg.e +
+        '&ctz=America/Toronto' +
+        '&details=' + encodeURIComponent('A Day with Kanish 🪐 — ' + dateStr) +
+        '&location=' + encodeURIComponent(key === 'dinner' ? dinner + ', Toronto, ON' : 'Toronto, ON');
+    }
+    Object.keys(SCHED).forEach(key => {
+      const seg = SCHED[key];
+      document.getElementById('t-' + key).textContent = seg.t;
+      document.getElementById('add-' + key).href = slotGcal(seg, key);
+    });
   </script>
 </body>
 </html>
