@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Welcome, Ishika!</title>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --accent: #f0a830;
+    --mono: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: #f3f4f6;
+    font-family: var(--mono);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    overflow: hidden;
+  }
+
+  /* starfield */
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .stars::before, .stars::after {
+    content: ""; position: absolute; inset: 0; background-repeat: repeat;
+  }
+  .stars::before {
+    background-image:
+      radial-gradient(1px 1px at 20px 30px, #ffffff, transparent),
+      radial-gradient(1px 1px at 130px 80px, #cbd5e1, transparent),
+      radial-gradient(1px 1px at 260px 160px, #ffffff, transparent),
+      radial-gradient(1px 1px at 80px 200px, #94a3b8, transparent),
+      radial-gradient(1px 1px at 340px 60px, #ffffff, transparent),
+      radial-gradient(1px 1px at 420px 220px, #cbd5e1, transparent),
+      radial-gradient(1px 1px at 500px 120px, #ffffff, transparent);
+    background-size: 600px 300px; opacity: 0.5;
+  }
+  .stars::after {
+    background-image:
+      radial-gradient(1px 1px at 150px 50px, #ffffff, transparent),
+      radial-gradient(1px 1px at 300px 180px, #94a3b8, transparent),
+      radial-gradient(1px 1px at 450px 90px, #ffffff, transparent),
+      radial-gradient(1px 1px at 90px 250px, #cbd5e1, transparent);
+    background-size: 500px 350px; opacity: 0.35;
+  }
+
+  .content { position: relative; z-index: 1; max-width: 640px; }
+
+  h1 {
+    margin: 0;
+    font-weight: 400;
+    font-size: 52px;
+    letter-spacing: 0.04em;
+  }
+  h1 .name { color: var(--accent); }
+
+  .pun {
+    margin: 22px 0 0;
+    font-size: 19px;
+    color: #c3cad6;
+    line-height: 1.6;
+  }
+  .sub {
+    margin: 10px 0 0;
+    font-size: 15px;
+    color: #7d8696;
+  }
+
+  .cta {
+    display: inline-block;
+    margin-top: 40px;
+    padding: 12px 28px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+  .cta:hover { background: var(--accent); color: #0a0e14; }
+
+  .back {
+    display: inline-block;
+    margin-top: 22px;
+    color: #7d8696;
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .back:hover { color: var(--accent); }
+
+  @media (max-width: 720px) {
+    h1 { font-size: 36px; }
+    .pun { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stars"></div>
+
+  <div class="content">
+    <h1>WELCOME, <span class="name">FISHIKA</span> 🐟</h1>
+    <p class="pun">You clicked a spinning galaxy to get here. That's a <em>lot</em> of effort for one guy's questionable jokes, Fishika.</p>
+    <p class="sub">But you're in now. No refunds. 🐟</p>
+    <a class="cta" href="calendar.html">Pick our day ▸</a>
+    <br />
+    <a class="back" href="index.html">◂ back to the galaxy</a>
+  </div>
+</body>
+</html>

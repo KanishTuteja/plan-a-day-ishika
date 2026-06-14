@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pick a Day — Fishika</title>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --card: #11151c;
+    --accent: #f0a830;
+    --line: #2a313c;
+    --mono: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: #f3f4f6;
+    font-family: var(--mono);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 56px 20px 60px;
+    min-height: 100vh;
+  }
+
+  /* starfield */
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .stars::before {
+    content: ""; position: absolute; inset: 0; background-repeat: repeat;
+    background-image:
+      radial-gradient(1px 1px at 20px 30px, #ffffff, transparent),
+      radial-gradient(1px 1px at 130px 80px, #cbd5e1, transparent),
+      radial-gradient(1px 1px at 260px 160px, #ffffff, transparent),
+      radial-gradient(1px 1px at 340px 60px, #ffffff, transparent),
+      radial-gradient(1px 1px at 420px 220px, #cbd5e1, transparent);
+    background-size: 600px 300px; opacity: 0.4;
+  }
+
+  .wrap { position: relative; z-index: 1; width: 100%; max-width: 760px; text-align: center; }
+
+  h1 {
+    margin: 0;
+    font-weight: 400;
+    font-size: 34px;
+    letter-spacing: 0.05em;
+  }
+  .lead { color: #9aa3b2; margin: 14px 0 0; font-size: 15px; }
+
+  .months {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px;
+    justify-content: center;
+    margin-top: 40px;
+  }
+
+  .month {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px;
+    width: 340px;
+  }
+  .month h2 {
+    margin: 0 0 16px;
+    font-weight: 400;
+    font-size: 18px;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  .dow {
+    font-size: 11px;
+    color: #6b7280;
+    padding: 4px 0;
+    letter-spacing: 0.05em;
+  }
+  .cell {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    border-radius: 8px;
+    color: #4b5260;            /* weekday: dimmed, disabled */
+    user-select: none;
+  }
+  .cell.empty { visibility: hidden; }
+  .cell.weekend {
+    color: #e6e9ef;
+    border: 1px solid var(--line);
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+  }
+  .cell.weekend:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .cell.selected {
+    background: var(--accent);
+    color: #0a0e14;
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+
+  .footerbar {
+    margin-top: 40px;
+    min-height: 28px;
+    font-size: 16px;
+    color: #c3cad6;
+  }
+  .footerbar .pickname { color: var(--accent); font-weight: 700; }
+
+  .cta {
+    display: inline-block;
+    margin-top: 26px;
+    padding: 12px 30px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    background: none;
+    font-family: var(--mono);
+    opacity: 0.35;
+    pointer-events: none;
+    transition: background 0.25s ease, color 0.25s ease, opacity 0.25s ease;
+  }
+  .cta.ready { opacity: 1; pointer-events: auto; }
+  .cta.ready:hover { background: var(--accent); color: #0a0e14; }
+
+  .back {
+    display: block;
+    margin-top: 26px;
+    color: #7d8696;
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .back:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+  <div class="stars"></div>
+
+  <div class="wrap">
+    <h1>PICK OUR DAY</h1>
+    <p class="lead">Weekends only — because we both know a weekday plan dies in the group chat. 💀</p>
+
+    <div class="months" id="months"></div>
+
+    <div class="footerbar" id="status">No day picked yet. The suspense is genuinely unbearable.</div>
+    <button class="cta" id="confirm">Lock it in ▸</button>
+
+    <a class="back" href="day.html">◂ back</a>
+  </div>
+
+  <script>
+    const YEAR = 2026;
+    const MONTHS = [
+      { idx: 6, name: 'JULY 2026' }
+    ];
+    const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+    const monthsEl = document.getElementById('months');
+    const statusEl = document.getElementById('status');
+    const confirmEl = document.getElementById('confirm');
+    let selected = null;
+
+    MONTHS.forEach(m => {
+      const monthDiv = document.createElement('div');
+      monthDiv.className = 'month';
+
+      const title = document.createElement('h2');
+      title.textContent = m.name;
+      monthDiv.appendChild(title);
+
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+
+      DOW.forEach(d => {
+        const dow = document.createElement('div');
+        dow.className = 'dow';
+        dow.textContent = d;
+        grid.appendChild(dow);
+      });
+
+      const firstDay = new Date(YEAR, m.idx, 1).getDay();      // 0=Sun
+      const daysInMonth = new Date(YEAR, m.idx + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        const e = document.createElement('div');
+        e.className = 'cell empty';
+        grid.appendChild(e);
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dow = new Date(YEAR, m.idx, day).getDay();
+        const isWeekend = (dow === 0 || dow === 6);
+        const cell = document.createElement('div');
+        cell.className = 'cell' + (isWeekend ? ' weekend' : '');
+        cell.textContent = day;
+
+        if (isWeekend) {
+          cell.addEventListener('click', () => {
+            document.querySelectorAll('.cell.selected').forEach(c => c.classList.remove('selected'));
+            cell.classList.add('selected');
+            selected = { month: m.idx, day, dow };
+            statusEl.innerHTML =
+              'Selected: <span class="pickname">' +
+              DAY_NAMES[dow] + ', ' + MONTH_NAMES[m.idx] + ' ' + day +
+              '</span>';
+            confirmEl.classList.add('ready');
+          });
+        }
+        grid.appendChild(cell);
+      }
+
+      monthDiv.appendChild(grid);
+      monthsEl.appendChild(monthDiv);
+    });
+
+    confirmEl.addEventListener('click', () => {
+      if (!selected) return;
+      const dateStr = DAY_NAMES[selected.dow] + ', ' + MONTH_NAMES[selected.month] + ' ' + selected.day;
+      sessionStorage.setItem('chosenDate', dateStr);
+      const pad = n => String(n).padStart(2, '0');
+      const iso = '' + YEAR + pad(selected.month + 1) + pad(selected.day); // YYYYMMDD
+      sessionStorage.setItem('chosenDateISO', iso);
+      window.location.href = 'activities.html';
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Plan a Day with Kanish</title>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --mono: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: #f3f4f6;
+    font-family: var(--mono);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* starfield background */
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .stars::before, .stars::after {
+    content: ""; position: absolute; inset: 0; background-repeat: repeat;
+  }
+  .stars::before {
+    background-image:
+      radial-gradient(1px 1px at 20px 30px, #ffffff, transparent),
+      radial-gradient(1px 1px at 130px 80px, #cbd5e1, transparent),
+      radial-gradient(1px 1px at 260px 160px, #ffffff, transparent),
+      radial-gradient(1px 1px at 80px 200px, #94a3b8, transparent),
+      radial-gradient(1px 1px at 340px 60px, #ffffff, transparent),
+      radial-gradient(1px 1px at 420px 220px, #cbd5e1, transparent),
+      radial-gradient(1px 1px at 500px 120px, #ffffff, transparent);
+    background-size: 600px 300px; opacity: 0.5;
+  }
+  .stars::after {
+    background-image:
+      radial-gradient(1px 1px at 150px 50px, #ffffff, transparent),
+      radial-gradient(1px 1px at 300px 180px, #94a3b8, transparent),
+      radial-gradient(1px 1px at 450px 90px, #ffffff, transparent),
+      radial-gradient(1px 1px at 90px 250px, #cbd5e1, transparent);
+    background-size: 500px 350px; opacity: 0.35;
+  }
+
+  h1 {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    font-weight: 400;
+    font-size: 56px;
+    letter-spacing: 0.06em;
+    text-align: center;
+    padding: 0 24px;
+  }
+  .tagline {
+    position: relative;
+    z-index: 1;
+    margin: 18px auto 0;
+    max-width: 520px;
+    padding: 0 24px;
+    text-align: center;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #9aa3b2;
+  }
+  .tagline em { color: #c3cad6; font-style: italic; }
+
+  /* milky way button */
+  .galaxy-btn {
+    position: relative;
+    z-index: 1;
+    margin-top: 36px;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+  }
+  .galaxy-btn:hover {
+    transform: scale(1.06);
+  }
+  .galaxy-btn canvas { border-radius: 50%; display: block; }
+
+  .btn-label {
+    position: relative;
+    z-index: 1;
+    margin-top: 22px;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #9aa3b2;
+    animation: pulse 2.6s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 0.45; } 50% { opacity: 1; } }
+
+  @media (max-width: 720px) {
+    h1 { font-size: 34px; }
+    .galaxy-btn { width: 64px; height: 64px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stars"></div>
+
+  <h1>PLAN A DAY WITH KANISH</h1>
+  <p class="tagline">One (1) whole day, pre-planned. No "idk, what do <em>you</em> wanna do?" loops allowed.</p>
+
+  <div class="galaxy-btn" id="galaxyBtn" title="Enter">
+    <canvas id="galaxy" width="72" height="72"></canvas>
+  </div>
+
+  <script type="importmap">
+  { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+
+    const canvas = document.getElementById('galaxy');
+    const SIZE = 72;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setSize(SIZE, SIZE, false);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 100);
+    camera.position.set(0, 2.6, 4.4);
+    camera.lookAt(0, 0, 0);
+
+    // galaxy particles
+    const COUNT = 4500, RADIUS = 5, BRANCHES = 5, SPIN = 1.1, RANDOMNESS = 0.32, POWER = 2.6;
+    const positions = new Float32Array(COUNT * 3);
+    const colors = new Float32Array(COUNT * 3);
+    const inside = new THREE.Color(0xffb066);
+    const outside = new THREE.Color(0x3a6bd6);
+
+    for (let i = 0; i < COUNT; i++) {
+      const i3 = i * 3;
+      const r = Math.pow(Math.random(), 1.5) * RADIUS;
+      const angle = ((i % BRANCHES) / BRANCHES) * Math.PI * 2;
+      const spin = r * SPIN;
+      const rnd = () => Math.pow(Math.random(), POWER) * (Math.random() < 0.5 ? 1 : -1) * RANDOMNESS * r;
+      positions[i3]     = Math.cos(angle + spin) * r + rnd();
+      positions[i3 + 1] = rnd() * 0.45;
+      positions[i3 + 2] = Math.sin(angle + spin) * r + rnd();
+      const c = inside.clone().lerp(outside, r / RADIUS);
+      colors[i3] = c.r; colors[i3 + 1] = c.g; colors[i3 + 2] = c.b;
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const mat = new THREE.PointsMaterial({
+      size: 0.035, sizeAttenuation: true, depthWrite: true,
+      blending: THREE.NormalBlending, vertexColors: true, transparent: false
+    });
+    const galaxy = new THREE.Points(geo, mat);
+    galaxy.rotation.x = 0.4;
+    scene.add(galaxy);
+
+    const clock = new THREE.Clock();
+    (function loop() {
+      const t = clock.getElapsedTime();
+      galaxy.rotation.y = t * 0.08;            // slow rotation
+      renderer.render(scene, camera);
+      requestAnimationFrame(loop);
+    })();
+
+    document.getElementById('galaxyBtn').addEventListener('click', () => {
+      window.location.href = 'day.html';
+    });
+  </script>
+</body>
+</html>

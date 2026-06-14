@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Plan — Fishika</title>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --card: #11151c;
+    --accent: #f0a830;
+    --line: #2a313c;
+    --mono: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: #f3f4f6;
+    font-family: var(--mono);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 56px 20px 70px;
+    min-height: 100vh;
+  }
+
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .stars::before {
+    content: ""; position: absolute; inset: 0; background-repeat: repeat;
+    background-image:
+      radial-gradient(1px 1px at 20px 30px, #ffffff, transparent),
+      radial-gradient(1px 1px at 130px 80px, #cbd5e1, transparent),
+      radial-gradient(1px 1px at 260px 160px, #ffffff, transparent),
+      radial-gradient(1px 1px at 340px 60px, #ffffff, transparent),
+      radial-gradient(1px 1px at 420px 220px, #cbd5e1, transparent);
+    background-size: 600px 300px; opacity: 0.4;
+  }
+
+  .wrap { position: relative; z-index: 1; width: 100%; max-width: 540px; text-align: center; }
+
+  .kicker { color: #6b7280; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; }
+  h1 { margin: 8px 0 0; font-weight: 400; font-size: 34px; letter-spacing: 0.05em; }
+  .date { margin: 14px 0 0; font-size: 18px; color: var(--accent); }
+
+  .card {
+    margin-top: 30px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 8px 22px;
+    text-align: left;
+  }
+  .row {
+    display: flex; gap: 14px; align-items: baseline;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .row:last-child { border-bottom: none; }
+  .row .n { color: var(--accent); font-size: 11px; min-width: 70px; letter-spacing: 0.08em; }
+  .row .v { font-size: 15px; color: #e6e9ef; }
+
+  .actions { margin-top: 30px; display: flex; flex-direction: column; gap: 12px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    padding: 14px 24px; border-radius: 999px;
+    font-family: var(--mono); font-size: 14px; letter-spacing: 0.04em;
+    text-decoration: none; cursor: pointer; border: 1px solid var(--accent);
+    transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+  }
+  .btn.primary { background: var(--accent); color: #0a0e14; }
+  .btn.primary:hover { opacity: 0.9; }
+  .btn.ghost { background: none; color: var(--accent); }
+  .btn.ghost:hover { background: var(--accent); color: #0a0e14; }
+
+  .seen {
+    margin-top: 22px; font-size: 12px; color: #6b7280; line-height: 1.7;
+  }
+  .seen b { color: #9aa3b2; font-weight: 400; }
+
+  .cheers-line { margin-top: 30px; font-size: 16px; color: var(--accent); line-height: 1.6; }
+
+  .back {
+    display: block; margin-top: 28px; color: #7d8696; text-decoration: none;
+    font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase;
+  }
+  .back:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+  <div class="stars"></div>
+
+  <div class="wrap">
+    <div class="kicker">The plan · finalized</div>
+    <h1>OUR DAY, FISHIKA 🪐</h1>
+    <p class="date" id="date">—</p>
+
+    <div class="card">
+      <div class="row"><span class="n">01 · START</span><span class="v" id="activity">—</span></div>
+      <div class="row"><span class="n">02 · WALK</span><span class="v" id="walk">—</span></div>
+      <div class="row"><span class="n">03 · DINNER</span><span class="v" id="dinner">—</span></div>
+      <div class="row"><span class="n">04 · NIGHTCAP</span><span class="v" id="combo">—</span></div>
+    </div>
+
+    <div class="actions">
+      <a class="btn primary" id="gcal" href="#" target="_blank" rel="noopener">📅 Add to Google Calendar</a>
+      <a class="btn ghost" id="mail" href="#">💌 Send my plan to Kanish</a>
+    </div>
+
+    <p class="seen">
+      Heads up, Fishika: adding this to your calendar invites <b>Kanish</b> as a guest —
+      so he'll see you picked everything. The "send" button emails him the plan too.
+    </p>
+
+    <p class="cheers-line" id="cheers">—</p>
+
+    <a class="back" href="index.html">◂ start over</a>
+  </div>
+
+  <script>
+    const KANISH_EMAIL = 'kanishtuteja@gmail.com';
+
+    const dateStr  = sessionStorage.getItem('chosenDate')    || 'A weekend in 2026';
+    const dateISO  = sessionStorage.getItem('chosenDateISO') || '20260704';
+    const activity = sessionStorage.getItem('chosenActivity')|| 'TBD';
+    const walk     = sessionStorage.getItem('chosenWalk')    || 'TBD';
+    const dinner   = sessionStorage.getItem('chosenDinner')  || 'TBD';
+    const combo    = sessionStorage.getItem('chosenCombo')   || 'TBD';
+
+    document.getElementById('date').textContent = dateStr;
+    document.getElementById('activity').textContent = activity;
+    document.getElementById('walk').textContent = walk;
+    document.getElementById('dinner').textContent = dinner;
+    document.getElementById('combo').textContent = combo;
+    document.getElementById('cheers').textContent =
+      '🥂 To finally doing this together. See you on ' + dateStr.split(',')[0] + '.';
+
+    // ---- Build the plan text ----
+    const planText =
+      'A Day with Kanish 🪐 — ' + dateStr + '\n\n' +
+      '01 · Start:   ' + activity + '\n' +
+      '02 · Walk:    ' + walk + '\n' +
+      '03 · Dinner:  ' + dinner + '\n' +
+      '04 · Nightcap: ' + combo + '\n\n' +
+      'Planned with way too much effort. Worth it.';
+
+    // ---- Google Calendar link (Kanish added as guest) ----
+    const start = dateISO + 'T140000';   // 2:00 PM
+    const end   = dateISO + 'T230000';   // 11:00 PM
+    const gcalUrl =
+      'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+      '&text=' + encodeURIComponent('A Day with Kanish 🪐') +
+      '&dates=' + start + '/' + end +
+      '&ctz=America/Toronto' +
+      '&details=' + encodeURIComponent(planText) +
+      '&location=' + encodeURIComponent(dinner + ', Toronto, ON') +
+      '&add=' + encodeURIComponent(KANISH_EMAIL);
+    document.getElementById('gcal').href = gcalUrl;
+
+    // ---- Email to Kanish ----
+    const mailUrl =
+      'mailto:' + KANISH_EMAIL +
+      '?subject=' + encodeURIComponent("Fishika's plan is locked in 🪐") +
+      '&body=' + encodeURIComponent(planText);
+    document.getElementById('mail').href = mailUrl;
+  </script>
+</body>
+</html>
